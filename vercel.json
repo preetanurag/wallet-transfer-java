@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm --prefix frontend run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm --prefix frontend ci",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://wallet-transfer-api-wtnh.onrender.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
