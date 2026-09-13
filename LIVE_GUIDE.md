@@ -57,6 +57,59 @@ Alice, Bob, and Carol are seeded with `100000` paise each for the live demo. The
 7. Disconnect, then click the **Bob** demo account button or connect with Bob's token.
 8. Look up the transfer ID and issue a refund. Only Bob, the original recipient, can reverse that transfer.
 
+## What Can Be Checked From The UI
+
+The UI is useful for checking the user-facing behavior, but the grading invariants are best verified with the scripts and API commands below.
+
+| Requirement | UI check | Stronger check |
+| --- | --- | --- |
+| `POST /wallets` get-or-create | Click a demo account multiple times and confirm the same wallet loads. | `scripts/burst.py` fires 50 concurrent wallet creates for one fresh user. |
+| `GET /wallets/{id}` | Connect and click **Refresh**. | Curl or Postman `GET /wallets/{id}` with the owner's token. |
+| `POST /transfers` | Alice sends money to Bob. | Curl/Postman with a chosen `idempotency_key`. |
+| `GET /transfers/{id}` | Paste a transfer ID into **Find or refund**. | Curl/Postman `GET /transfers/{id}` as sender or recipient. |
+| No overdraft | Try sending more than the connected wallet balance; the UI should show a declined result. | Burst script verifies no negative balances after contention. |
+| Conservation | Send Alice to Bob, then Bob refunds; balances return to the starting total. | Burst script verifies total balance is unchanged under hundreds of concurrent transfers. |
+| Reversal/refund | Alice sends, Bob looks up the transfer, Bob clicks **Review full refund**. | `scripts/reversal-burst.py` verifies concurrent refund retries and double-refund protection. |
+| Idempotent retry | The UI preserves a generated key only for uncertain network retries. Normal successful UI transfers intentionally generate a new key each time. | Curl/Postman/scripts can reuse the exact same `idempotency_key` and prove one debit/credit. |
+| Same-key different-body conflict | Not exposed in the UI because it is a developer/API concern. | Curl/Postman: reuse a key with a changed amount or wallet and expect `409`. |
+| Race-free get-or-create | Not meaningfully visible from one browser session. | `scripts/burst.py` is the intended proof. |
+
+## Idempotency API Proof
+
+The UI hides idempotency keys because normal users should not manage request keys manually. To prove idempotency to a reviewer, use the API.
+
+First request:
+
+```bash
+curl -s https://wallet-transfer-api-wtnh.onrender.com/transfers \
+  -H 'Authorization: Bearer E-nm_NP4Yf2okAH0diFrEc53IKXscU6q' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "from": "78864aaf-0ff1-4dcd-bf42-c6a7a313e5c0",
+    "to": "00000000-0000-4000-8000-000000000002",
+    "amount_paise": 100,
+    "idempotency_key": "review-idempotency-demo-1"
+  }'
+```
+
+Run the exact same command again. The response should contain the same transfer ID and no second debit.
+
+Then reuse the same key with a different amount:
+
+```bash
+curl -i -s https://wallet-transfer-api-wtnh.onrender.com/transfers \
+  -H 'Authorization: Bearer E-nm_NP4Yf2okAH0diFrEc53IKXscU6q' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "from": "78864aaf-0ff1-4dcd-bf42-c6a7a313e5c0",
+    "to": "00000000-0000-4000-8000-000000000002",
+    "amount_paise": 101,
+    "idempotency_key": "review-idempotency-demo-1"
+  }'
+```
+
+Expected result: HTTP `409` with `idempotency_key_conflict`.
+
 ## Live API Examples
 
 Create or fetch Alice's wallet through the deployed backend:
