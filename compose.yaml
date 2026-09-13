@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wallet
+      POSTGRES_USER: wallet
+      POSTGRES_PASSWORD: wallet-local-password
+    volumes:
+      - wallet-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet -d wallet"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/wallet
+      DB_USERNAME: wallet
+      DB_PASSWORD: wallet-local-password
+      AUTH_TOKENS: '${AUTH_TOKENS:-{"alice":"demo-alice-token-0001","bob":"demo-bob-token-000001","carol":"demo-carol-token-0001","fresh":"demo-fresh-token-0001"}}'
+    depends_on:
+      db:
+        condition: service_healthy
+    init: true
+  tests:
+    build:
+      context: .
+      target: test
+    profiles: [test]
+    environment:
+      TEST_DB_URL: jdbc:postgresql://db:5432/wallet
+      TEST_DB_USERNAME: wallet
+      TEST_DB_PASSWORD: wallet-local-password
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["mvn", "-B", "verify"]
+volumes:
+  wallet-data:

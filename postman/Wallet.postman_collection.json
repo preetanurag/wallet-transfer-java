@@ -1,0 +1,920 @@
+{
+  "info": {
+    "name": "Wallet Transfer Java \u2014 Local API",
+    "_postman_id": "22a48d80-8419-4af7-b0ee-6ea4f4de03d4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run folders in order against seeded, isolated demo wallets. Requires Alice >= 100 paise. Successful full run transfers 100 paise then refunds it. Does not fund/reset balances. Tokens are environment variables. Do not run on real-money wallets."
+  },
+  "item": [
+    {
+      "name": "01 Wallet setup",
+      "item": [
+        {
+          "name": "Get or create alice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/wallets",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set(\"alice_wallet_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get or create bob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/wallets",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set(\"bob_wallet_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get or create carol",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/wallets",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{carol_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set(\"carol_wallet_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alice balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/wallets/{{alice_wallet_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Transfer and reversal workflow",
+      "item": [
+        {
+          "name": "1. Transfer 100 paise Alice to Bob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{bob_wallet_id}}\",\n  \"amount_paise\": 100,\n  \"idempotency_key\": \"{{transfer_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"transfer_key\", pm.variables.replaceIn(\"{{$guid}}\"));",
+                  "pm.environment.set(\"reversal_key\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const t = pm.response.json();",
+                  "pm.test(\"Transfer succeeded\", () => pm.expect(t.status).to.eql(\"succeeded\"));",
+                  "if (pm.response.code === 200 && t.status === \"succeeded\") {",
+                  " pm.environment.set(\"transfer_id\", t.id);",
+                  " pm.environment.set(\"original_transfer_response\", JSON.stringify(t));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Replay same transfer once",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{bob_wallet_id}}\",\n  \"amount_paise\": 100,\n  \"idempotency_key\": \"{{transfer_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Identical stored transfer\", () => pm.expect(pm.response.json()).to.eql(JSON.parse(pm.environment.get(\"original_transfer_response\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Changed amount under same key conflicts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{bob_wallet_id}}\",\n  \"amount_paise\": 101,\n  \"idempotency_key\": \"{{transfer_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Read transfer as sender",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Read transfer as recipient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Sender cannot debit recipient for a refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}/reverse",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{reversal_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Bob refunds original transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}/reverse",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{reversal_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const t = pm.response.json();",
+                  "pm.test(\"Refund succeeded\", () => pm.expect(t.status).to.eql(\"succeeded\"));",
+                  "pm.test(\"Original transfer linked\", () => pm.expect(t.reversal_of).to.eql(pm.environment.get(\"transfer_id\")));",
+                  "if (pm.response.code === 200 && t.status === \"succeeded\") {",
+                  " pm.environment.set(\"reversal_id\", t.id);",
+                  " pm.environment.set(\"original_reversal_response\", JSON.stringify(t));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Replay same reversal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}/reverse",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{reversal_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Identical stored refund\", () => pm.expect(pm.response.json()).to.eql(JSON.parse(pm.environment.get(\"original_reversal_response\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. New key cannot double refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{transfer_id}}/reverse",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Read refund",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/transfers/{{reversal_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Validation and authorization",
+      "item": [
+        {
+          "name": "No authentication",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/wallets/{{alice_wallet_id}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bob cannot read Alice wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/wallets/{{alice_wallet_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bob cannot spend Alice funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bob_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{bob_wallet_id}}\",\n  \"amount_paise\": 100,\n  \"idempotency_key\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fractional paise rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{bob_wallet_id}}\",\n  \"amount_paise\": 1.5,\n  \"idempotency_key\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Self transfer rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/transfers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{alice_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"{{alice_wallet_id}}\",\n  \"to\": \"{{alice_wallet_id}}\",\n  \"amount_paise\": 100,\n  \"idempotency_key\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Observability",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/healthz",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prometheus metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "postman-wallet-demo"
+              }
+            ],
+            "url": "{{base_url}}/metrics",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: wallet-transfer-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: AUTH_TOKENS
+        sync: false
+      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        value: "5"
+      - key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+        value: "1"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx256m"

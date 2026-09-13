@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Wallet Transfer API
+  version: 1.0.0
+  description: Integer paise transfers with caller-scoped durable idempotency.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /wallets:
+    post:
+      summary: Get or create the caller's wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                user_id: {type: string, description: Must equal the authenticated user when supplied}
+      responses:
+        '200':
+          description: Current wallet
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Wallet'}
+        default: {$ref: '#/components/responses/Error'}
+  /wallets/{id}:
+    get:
+      summary: Read an owned wallet
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+      responses:
+        '200':
+          description: Current wallet
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Wallet'}
+        default: {$ref: '#/components/responses/Error'}
+  /transfers:
+    post:
+      summary: Transfer funds or replay a stored result
+      description: Both success and persistent business decline use HTTP 200. A changed body under the same caller/key uses 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [from, to, amount_paise, idempotency_key]
+              properties:
+                from: {type: string, format: uuid}
+                to: {type: string, format: uuid}
+                amount_paise: {type: integer, format: int64, minimum: 1, maximum: 9007199254740991}
+                idempotency_key: {type: string, minLength: 1, maxLength: 128, pattern: '^[!-~]+$'}
+      responses:
+        '200':
+          description: Committed result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Transfer'}
+        default: {$ref: '#/components/responses/Error'}
+  /transfers/{id}:
+    get:
+      summary: Read a transfer as sender or recipient
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+      responses:
+        '200':
+          description: Original stored result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Transfer'}
+        default: {$ref: '#/components/responses/Error'}
+  /transfers/{id}/reverse:
+    post:
+      summary: Refund the full original transfer as its recipient
+      description: >-
+        Only the original recipient can authorize the debit. Amount and direction
+        are derived from the original. Same key/original replays the stored result;
+        changed operation/original, already-refunded originals, declined originals
+        and reversal-of-reversal attempts return 409. Insufficient funds returns a
+        persistent 200 declined result; a new key may retry after funding.
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [idempotency_key]
+              properties:
+                idempotency_key: {type: string, minLength: 1, maxLength: 128, pattern: '^[!-~]+$'}
+      responses:
+        '200':
+          description: Committed refund result, either succeeded or declined
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Transfer'}
+        '403': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+        '409': {$ref: '#/components/responses/Error'}
+        default: {$ref: '#/components/responses/Error'}
+  /healthz:
+    get:
+      security: []
+      summary: PostgreSQL-aware health
+      responses:
+        '200': {description: Healthy}
+        '503': {description: Unhealthy}
+  /metrics:
+    get:
+      security: []
+      summary: Prometheus metrics
+      responses:
+        '200':
+          description: Metrics exposition
+          content:
+            text/plain:
+              schema: {type: string}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  responses:
+    Error:
+      description: API error; 503 may be retried with the same transfer key and body
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, correlation_id]
+            properties:
+              error: {type: string}
+              correlation_id: {type: string}
+  schemas:
+    Wallet:
+      type: object
+      required: [id, balance_paise]
+      properties:
+        id: {type: string, format: uuid}
+        balance_paise: {type: integer, format: int64, minimum: 0, maximum: 9007199254740991}
+    Transfer:
+      type: object
+      required: [id, from, to, amount_paise, idempotency_key, status, reason, reversal_of]
+      properties:
+        id: {type: string, format: uuid}
+        from: {type: string, format: uuid}
+        to: {type: string, format: uuid}
+        amount_paise: {type: integer, format: int64, minimum: 1, maximum: 9007199254740991}
+        idempotency_key: {type: string}
+        status: {type: string, enum: [succeeded, declined]}
+        reason: {type: string, nullable: true, enum: [insufficient_funds, recipient_balance_limit, null]}
+        reversal_of: {type: string, format: uuid, nullable: true, description: Original transfer ID for a refund; null for forward transfers}

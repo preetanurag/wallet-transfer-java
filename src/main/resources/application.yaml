@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: wallet-transfer
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/wallet}
+    username: ${DB_USERNAME:wallet}
+    password: ${DB_PASSWORD:wallet-local-password}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 5000
+      connection-init-sql: "SET statement_timeout = '10s'"
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  tomcat:
+    connection-timeout: 10s
+    max-http-form-post-size: 8KB
+wallet:
+  auth-tokens: ${AUTH_TOKENS}
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,prometheus
+      path-mapping:
+        health: healthz
+        prometheus: metrics
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+logging:
+  structured:
+    format:
+      console: logstash

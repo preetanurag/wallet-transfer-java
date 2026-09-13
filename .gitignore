@@ -1,0 +1,18 @@
+/target/
+.env
+*.log
+.idea/
+*.iml
+.vscode/
+
+.env.*
+!.env.example
+.vercel/
+*.pem
+
+# Local working notes and machine-specific artifacts
+.run/
+.DS_Store
+HOSTING-PLAN.md
+frontend/LOCAL-TEST-RESULTS.md
+requests.http
