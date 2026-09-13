@@ -20,5 +20,7 @@ services:
         value: "5"
       - key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
         value: "1"
+      - key: DB_CONNECTION_TIMEOUT_MS
+        value: "30000"
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx256m"

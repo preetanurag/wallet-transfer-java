@@ -7,7 +7,7 @@ spring:
     password: ${DB_PASSWORD:wallet-local-password}
     hikari:
       maximum-pool-size: 20
-      connection-timeout: 5000
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
       connection-init-sql: "SET statement_timeout = '10s'"
   lifecycle:
     timeout-per-shutdown-phase: 20s
