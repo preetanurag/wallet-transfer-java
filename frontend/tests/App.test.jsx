@@ -44,10 +44,10 @@ it('offers refunds only for an incoming successful original transfer', async () 
   await connect();
   fireEvent.change(screen.getByLabelText('Transfer ID'),{target:{value:transfer.id}});
   api.mockResolvedValueOnce({value:transfer}); fireEvent.click(screen.getByRole('button',{name:'Look up'}));
-  await screen.findByText('Only the recipient can issue a refund.');
-  expect(screen.queryByRole('button',{name:'Review refund'})).not.toBeInTheDocument();
+  await screen.findByText('Only the original recipient sees the refund action.');
+  expect(screen.queryByRole('button',{name:'Review full refund'})).not.toBeInTheDocument();
   api.mockResolvedValueOnce({value:{...transfer,from:bob,to:alice}}); fireEvent.click(screen.getByRole('button',{name:'Look up'}));
-  fireEvent.click(await screen.findByRole('button',{name:'Review refund'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Review full refund'}));
   api.mockResolvedValueOnce({value:{...transfer,reversal_of:transfer.id}});
   fireEvent.click(screen.getByRole('button',{name:'Confirm refund'}));
   await screen.findByRole('heading',{name:'Refund completed'});

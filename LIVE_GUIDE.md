@@ -2,6 +2,20 @@
 
 This guide gives reviewers the links, demo credentials, request examples, and local run commands needed to evaluate the wallet transfer project.
 
+## What To Submit
+
+Submit these items:
+
+- Public GitHub repository: https://github.com/preetanurag/wallet-transfer-java
+- Live UI: https://wallet-transfer-java.vercel.app
+- Live backend API: https://wallet-transfer-api-wtnh.onrender.com
+- Live health check: https://wallet-transfer-api-wtnh.onrender.com/healthz
+- Burst scripts: `scripts/burst.py` and `scripts/reversal-burst.py`
+- Design write-up: `DESIGN.md`
+- This live guide: `LIVE_GUIDE.md`
+
+If the form has room for notes, mention that Render's free service can sleep and the first request may take about a minute.
+
 ## Submission Links
 
 | Item | Link |
@@ -30,7 +44,7 @@ Alice, Bob, and Carol are seeded with `100000` paise each for the live demo. The
 ## Live UI Walkthrough
 
 1. Open https://wallet-transfer-java.vercel.app.
-2. Paste Alice's bearer token and click **Connect**.
+2. Click the **Alice** demo account button, or paste Alice's bearer token and click **Connect**.
 3. Alice's wallet should load with a balance of `100000` paise.
 4. To transfer money to Bob, use Bob's seeded wallet ID:
 
@@ -40,7 +54,7 @@ Alice, Bob, and Carol are seeded with `100000` paise each for the live demo. The
 
 5. Enter an amount in rupees, review, and confirm.
 6. Copy the returned transfer ID from the activity panel.
-7. Connect with Bob's token.
+7. Disconnect, then click the **Bob** demo account button or connect with Bob's token.
 8. Look up the transfer ID and issue a refund. Only Bob, the original recipient, can reverse that transfer.
 
 ## Live API Examples

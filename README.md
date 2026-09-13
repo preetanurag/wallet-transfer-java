@@ -2,6 +2,8 @@
 
 A complete backend project using **Java 17, Spring Boot 4.1.1, Spring JDBC, Spring Security, PostgreSQL, Flyway, Actuator and Micrometer**. Money is integer paise; transfers and their idempotency records commit atomically.
 
+For deployed reviewer links, production demo tokens, and submission steps, see [LIVE_GUIDE.md](LIVE_GUIDE.md).
+
 ## Start the whole application
 
 Requires Docker with Compose:
