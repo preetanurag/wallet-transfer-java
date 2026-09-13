@@ -153,10 +153,14 @@ The integration suite also covers reversal retry storms, distinct-key races, aut
 Standalone load reproduction uses only Python 3's standard library:
 
 ```sh
-BASE_URL=https://your-api.example AUTH_TOKENS='{"alice":"...","bob":"...","carol":"...","fresh":"..."}' python3 scripts/burst.py
+BASE_URL=https://your-api.example \
+CONTENDED_TRANSFERS=30 \
+BURST_WORKERS=10 \
+AUTH_TOKENS='{"alice":"...","bob":"...","carol":"...","fresh":"..."}' \
+python3 scripts/burst.py
 ```
 
-Run against seeded, isolated demo wallets without unrelated writers. To repeat the fresh-user creation race, configure a new server-side user/token and supply its token as `fresh` to the script. Ordinary retries on an already-created wallet are still checked for a stable ID.
+Run against seeded, isolated demo wallets without unrelated writers. Increase `CONTENDED_TRANSFERS=360` for the heavier local Docker stress run; keep the smaller hosted value on free tiers if the database pool is limited. To repeat the fresh-user creation race, configure a new server-side user/token and supply its token as `fresh` to the script. Ordinary retries on an already-created wallet are still checked for a stable ID.
 
 ## Project layout
 

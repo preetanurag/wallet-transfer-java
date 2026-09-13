@@ -68,7 +68,7 @@ The UI is useful for checking the user-facing behavior, but the grading invarian
 | `POST /transfers` | Alice sends money to Bob. | Curl/Postman with a chosen `idempotency_key`. |
 | `GET /transfers/{id}` | Paste a transfer ID into **Find or refund**. | Curl/Postman `GET /transfers/{id}` as sender or recipient. |
 | No overdraft | Try sending more than the connected wallet balance; the UI should show a declined result. | Burst script verifies no negative balances after contention. |
-| Conservation | Send Alice to Bob, then Bob refunds; balances return to the starting total. | Burst script verifies total balance is unchanged under hundreds of concurrent transfers. |
+| Conservation | Send Alice to Bob, then Bob refunds; balances return to the starting total. | Burst script verifies total balance is unchanged under concurrent transfers. The local Docker run can be increased to 360 transfers for heavier stress. |
 | Reversal/refund | Alice sends, Bob looks up the transfer, Bob clicks **Review full refund**. | `scripts/reversal-burst.py` verifies concurrent refund retries and double-refund protection. |
 | Idempotent retry | The UI preserves a generated key only for uncertain network retries. Normal successful UI transfers intentionally generate a new key each time. | Curl/Postman/scripts can reuse the exact same `idempotency_key` and prove one debit/credit. |
 | Same-key different-body conflict | Not exposed in the UI because it is a developer/API concern. | Curl/Postman: reuse a key with a changed amount or wallet and expect `409`. |
@@ -226,7 +226,29 @@ BASE_URL=http://localhost:8180 python3 scripts/burst.py
 BASE_URL=http://localhost:8180 python3 scripts/reversal-burst.py
 ```
 
-For the live API, set `BASE_URL=https://wallet-transfer-api-wtnh.onrender.com` and pass the production token map as `AUTH_TOKENS`.
+For the live API on the free Render/Supabase deployment, use this hosted-friendly command. It still checks the required races and invariants, while avoiding overloading the free database pool during review:
+
+```bash
+BASE_URL=https://wallet-transfer-api-wtnh.onrender.com \
+CONTENDED_TRANSFERS=30 \
+BURST_WORKERS=10 \
+AUTH_TOKENS='{"alice":"E-nm_NP4Yf2okAH0diFrEc53IKXscU6q","bob":"RHhLpsMwaV5aWkMj24gNZOZYSStibc33","carol":"9bLZTjROb-6tPFZC2wJo8r4hr4ycAb9B","fresh":"G11eVFbZupLbg2V5vnSOFRHRIre37tXa"}' \
+python3 scripts/burst.py
+```
+
+For the heavier local Docker stress run, use:
+
+```bash
+BASE_URL=http://localhost:8180 CONTENDED_TRANSFERS=360 python3 scripts/burst.py
+```
+
+For live reversal/refund checks:
+
+```bash
+BASE_URL=https://wallet-transfer-api-wtnh.onrender.com \
+AUTH_TOKENS='{"alice":"E-nm_NP4Yf2okAH0diFrEc53IKXscU6q","bob":"RHhLpsMwaV5aWkMj24gNZOZYSStibc33","carol":"9bLZTjROb-6tPFZC2wJo8r4hr4ycAb9B"}' \
+python3 scripts/reversal-burst.py
+```
 
 ## Postman
 
